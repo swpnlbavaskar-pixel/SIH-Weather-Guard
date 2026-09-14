@@ -1,0 +1,1926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>SIH Weather Guard</title>
+
+<link rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+    background:linear-gradient(135deg,#07152e,#0b2c52,#061329);
+    color:white;
+    min-height:100vh;
+}
+
+.container{
+    width:92%;
+    max-width:1250px;
+    margin:auto;
+}
+
+header{
+    text-align:center;
+    padding:35px 10px 20px;
+}
+
+.badge{
+    display:inline-block;
+    background:#163e6b;
+    padding:8px 18px;
+    border-radius:30px;
+    font-size:13px;
+    margin-bottom:15px;
+    border:1px solid #2d6cae;
+}
+
+header h1{
+    font-size:42px;
+    margin-bottom:10px;
+}
+
+header p{
+    color:#b9d4ef;
+}
+
+.search-box{
+    display:flex;
+    gap:10px;
+    margin:25px auto;
+    max-width:700px;
+}
+
+.search-box input{
+    flex:1;
+    padding:15px;
+    border-radius:10px;
+    border:none;
+    outline:none;
+    font-size:16px;
+}
+
+button{
+    border:none;
+    padding:14px 18px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:bold;
+    background:#168cff;
+    color:white;
+}
+
+button:hover{
+    opacity:.85;
+}
+
+.secondary{
+    background:#164a76;
+}
+
+.danger{
+    background:#c62828;
+}
+
+.success{
+    background:#178a5b;
+}
+
+.section{
+    margin:25px 0;
+    background:rgba(12,35,65,.85);
+    border:1px solid rgba(120,180,230,.15);
+    border-radius:18px;
+    padding:25px;
+    box-shadow:0 10px 30px rgba(0,0,0,.2);
+}
+
+.section h2{
+    margin-bottom:18px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:15px;
+}
+
+.card{
+    background:rgba(255,255,255,.06);
+    padding:20px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.08);
+}
+
+.card h3{
+    margin-bottom:10px;
+}
+
+.card p{
+    color:#c1d4e8;
+    line-height:1.6;
+}
+
+.monitor{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+    flex-wrap:wrap;
+}
+
+.countdown{
+    font-size:25px;
+    font-weight:bold;
+    color:#56b5ff;
+}
+
+.weather-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:15px;
+}
+
+.weather-card{
+    background:rgba(255,255,255,.06);
+    padding:20px;
+    border-radius:15px;
+    text-align:center;
+}
+
+.weather-card h3{
+    color:#9fc8ed;
+    margin-bottom:10px;
+}
+
+.weather-card p{
+    font-size:25px;
+    font-weight:bold;
+}
+
+.risk{
+    text-align:center;
+    padding:25px;
+    border-radius:15px;
+    font-size:30px;
+    font-weight:bold;
+}
+
+.low{
+    background:rgba(25,150,100,.2);
+    border:1px solid #20c78a;
+    color:#46e6a7;
+}
+
+.moderate{
+    background:rgba(255,170,0,.15);
+    border:1px solid #ffb300;
+    color:#ffc34d;
+}
+
+.high{
+    background:rgba(220,40,40,.18);
+    border:1px solid #ff5252;
+    color:#ff6b6b;
+}
+
+.alert{
+    padding:18px;
+    border-radius:12px;
+    background:rgba(255,255,255,.06);
+    margin-bottom:10px;
+    border-left:5px solid #168cff;
+}
+
+.alert.high-alert{
+    border-left-color:#ff4444;
+}
+
+.alert.moderate-alert{
+    border-left-color:#ffb300;
+}
+
+#map{
+    height:400px;
+    border-radius:15px;
+    overflow:hidden;
+}
+
+canvas{
+    background:rgba(255,255,255,.02);
+    border-radius:15px;
+    padding:10px;
+}
+
+.city-card{
+    position:relative;
+}
+
+.city-card button{
+    margin-top:10px;
+    margin-right:5px;
+    padding:9px 12px;
+}
+
+.city-risk{
+    font-weight:bold;
+    margin:8px 0;
+}
+
+.kpi{
+    text-align:center;
+}
+
+.kpi-value{
+    font-size:32px;
+    font-weight:bold;
+    margin:10px 0;
+    color:#54b6ff;
+}
+
+ul{
+    color:#c7d9eb;
+    padding-left:22px;
+}
+
+li{
+    margin:8px 0;
+}
+
+footer{
+    text-align:center;
+    color:#8eabc5;
+    padding:35px 10px;
+    line-height:1.7;
+}
+
+@media(max-width:700px){
+    header h1{
+        font-size:30px;
+    }
+
+    .search-box{
+        flex-direction:column;
+    }
+
+    .monitor{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+
+<div class="badge">🇮🇳 SMART INDIA HACKATHON PROTOTYPE</div>
+
+<h1>🌦️ SIH Weather Guard</h1>
+
+<p>
+Smart Weather Monitoring & Early Risk Detection Dashboard
+</p>
+
+<div class="search-box">
+
+<input
+id="cityInput"
+type="text"
+placeholder="Enter city e.g. Pune, Mumbai, Delhi"
+value="Pune">
+
+<button onclick="checkWeather()">
+Check Weather
+</button>
+
+<button class="secondary" onclick="useLocation()">
+📍 My Location
+</button>
+
+</div>
+
+</header>
+
+
+<!-- AUTOMATIC MONITORING -->
+
+<div class="section">
+
+<div class="monitor">
+
+<div>
+<h2>🔄 Automatic Weather Monitoring</h2>
+<p style="color:#abc5df">
+Weather data automatically refreshes while this dashboard is open.
+</p>
+</div>
+
+<div>
+<div>Next refresh in:</div>
+<div class="countdown" id="countdown">05:00</div>
+</div>
+
+<button onclick="manualRefresh()">
+Refresh Now
+</button>
+
+</div>
+
+</div>
+
+
+<!-- MULTI CITY -->
+
+<div class="section">
+
+<h2>🌍 Multi-City Risk Dashboard</h2>
+
+<div id="multiCity" class="grid">
+<p style="color:#9db6cf">
+Save cities to monitor multiple locations.
+</p>
+</div>
+
+</div>
+
+
+<!-- SAVED CITIES -->
+
+<div class="section">
+
+<h2>⭐ Saved Cities</h2>
+
+<button class="success" onclick="saveCurrentCity()">
++ Save Current City
+</button>
+
+<div id="savedCities"
+class="grid"
+style="margin-top:20px">
+</div>
+
+</div>
+
+
+<!-- CURRENT WEATHER -->
+
+<div class="section">
+
+<h2>🌤️ Current Weather — <span id="cityName">Pune</span></h2>
+
+<div class="weather-grid">
+
+<div class="weather-card">
+<h3>🌡️ Temperature</h3>
+<p id="temperature">-- °C</p>
+</div>
+
+<div class="weather-card">
+<h3>💧 Humidity</h3>
+<p id="humidity">-- %</p>
+</div>
+
+<div class="weather-card">
+<h3>💨 Wind</h3>
+<p id="wind">-- km/h</p>
+</div>
+
+<div class="weather-card">
+<h3>🌧️ Rain</h3>
+<p id="rain">-- mm</p>
+</div>
+
+<div class="weather-card">
+<h3>☁️ Condition</h3>
+<p id="condition" style="font-size:18px">
+Loading...
+</p>
+</div>
+
+<div class="weather-card">
+<h3>🕒 Updated</h3>
+<p id="updated" style="font-size:18px">
+--
+</p>
+</div>
+
+</div>
+
+</div>
+
+
+<!-- RISK -->
+
+<div class="section">
+
+<h2>⚠️ Weather Risk Level</h2>
+
+<div id="riskBox" class="risk low">
+LOW
+</div>
+
+<p id="recommendation"
+style="text-align:center;margin-top:15px;color:#bcd1e6">
+Weather conditions are currently normal.
+</p>
+
+</div>
+
+
+<!-- EMERGENCY -->
+
+<div class="section">
+
+<h2>🚨 Emergency Alert Center</h2>
+
+<div id="emergencyAlert"
+class="alert">
+Checking weather conditions...
+</div>
+
+</div>
+
+
+<!-- KPI -->
+
+<div class="section">
+
+<h2>📊 System Overview</h2>
+
+<div class="grid">
+
+<div class="card kpi">
+<h3>🏙️ Saved Cities</h3>
+<div id="kpiCities" class="kpi-value">0</div>
+</div>
+
+<div class="card kpi">
+<h3>⚠️ Current Risk</h3>
+<div id="kpiRisk" class="kpi-value">LOW</div>
+</div>
+
+<div class="card kpi">
+<h3>🌡️ Temperature</h3>
+<div id="kpiTemp" class="kpi-value">--</div>
+</div>
+
+<div class="card kpi">
+<h3>🚨 Weather Alerts</h3>
+<div id="kpiAlerts" class="kpi-value">0</div>
+</div>
+
+</div>
+
+</div>
+
+
+<!-- MAP -->
+
+<div class="section">
+
+<h2>🗺️ Live Weather Location Map</h2>
+
+<div id="map"></div>
+
+</div>
+
+
+<!-- ANALYTICS -->
+
+<div class="section">
+
+<h2>📈 Weather Analytics</h2>
+
+<canvas id="weatherChart"></canvas>
+
+</div>
+
+
+<!-- FORECAST -->
+
+<div class="section">
+
+<h2>📅 7-Day Forecast</h2>
+
+<div id="forecast"
+class="grid">
+</div>
+
+</div>
+
+
+<!-- SMART ALERTS -->
+
+<div class="section">
+
+<div style="
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:10px;
+flex-wrap:wrap;
+">
+
+<h2>🔔 Smart Alert Center</h2>
+
+<div>
+<button onclick="testAlert()">
+Test Alert
+</button>
+
+<button class="danger" onclick="clearAlerts()">
+Clear History
+</button>
+</div>
+
+</div>
+
+<div id="alertHistory"
+style="margin-top:20px">
+</div>
+
+</div>
+
+
+<!-- SIH PRESENTATION -->
+
+<div class="section">
+
+<h2>🎯 SIH Problem Statement</h2>
+
+<p style="color:#c1d4e8;line-height:1.8">
+Weather conditions can change rapidly and may create risks for
+citizens, travellers, farmers and local communities.
+Traditional weather information may not provide a simple,
+location-focused risk view.
+</p>
+
+</div>
+
+
+<div class="section">
+
+<h2>💡 Our Solution</h2>
+
+<p style="color:#c1d4e8;line-height:1.8">
+
+<b>SIH Weather Guard</b> is a smart weather monitoring prototype
+that converts live weather data into an easy-to-understand
+risk level: <b>LOW, MODERATE or HIGH</b>.
+
+</p>
+
+<p style="color:#c1d4e8;line-height:1.8;margin-top:10px">
+
+The system combines current weather information, forecasts,
+multi-city monitoring, maps, analytics and smart alerts
+in one dashboard.
+
+</p>
+
+</div>
+
+
+<div class="section">
+
+<h2>⚙️ How It Works</h2>
+
+<div class="grid">
+
+<div class="card">
+<h3>1️⃣ Location</h3>
+<p>
+User searches a city or uses current location.
+</p>
+</div>
+
+<div class="card">
+<h3>2️⃣ Weather Data</h3>
+<p>
+Live weather information is retrieved from the weather API.
+</p>
+</div>
+
+<div class="card">
+<h3>3️⃣ Risk Analysis</h3>
+<p>
+Temperature, wind, rain and weather conditions are analysed.
+</p>
+</div>
+
+<div class="card">
+<h3>4️⃣ Alert</h3>
+<p>
+The dashboard highlights the risk and provides a recommendation.
+</p>
+</div>
+
+</div>
+
+</div>
+
+
+<div class="section">
+
+<h2>🚨 Key Features</h2>
+
+<div class="grid">
+
+<div class="card">
+<h3>🌦️ Live Weather</h3>
+<p>
+Real-time weather monitoring.
+</p>
+</div>
+
+<div class="card">
+<h3>🔴 Risk Detection</h3>
+<p>
+LOW, MODERATE and HIGH risk classification.
+</p>
+</div>
+
+<div class="card">
+<h3>🌍 Multi-City</h3>
+<p>
+Monitor multiple saved locations.
+</p>
+</div>
+
+<div class="card">
+<h3>📅 Forecast</h3>
+<p>
+7-day weather forecast.
+</p>
+</div>
+
+<div class="card">
+<h3>🗺️ Risk Map</h3>
+<p>
+Location-based weather visualization.
+</p>
+</div>
+
+<div class="card">
+<h3>🔔 Smart Alerts</h3>
+<p>
+Weather risk alerts and alert history.
+</p>
+</div>
+
+</div>
+
+</div>
+
+
+<div class="section">
+
+<h2>📡 Technology & Data Sources</h2>
+
+<div class="grid">
+
+<div class="card">
+<h3>HTML</h3>
+<p>Dashboard structure.</p>
+</div>
+
+<div class="card">
+<h3>CSS</h3>
+<p>Responsive user interface.</p>
+</div>
+
+<div class="card">
+<h3>JavaScript</h3>
+<p>Weather logic and automation.</p>
+</div>
+
+<div class="card">
+<h3>Open-Meteo</h3>
+<p>Weather and forecast data.</p>
+</div>
+
+<div class="card">
+<h3>OpenStreetMap</h3>
+<p>Map visualization.</p>
+</div>
+
+<div class="card">
+<h3>Chart.js</h3>
+<p>Weather analytics.</p>
+</div>
+
+</div>
+
+</div>
+
+
+<div class="section">
+
+<h2>🚀 Future Scope</h2>
+
+<ul>
+
+<li>🇮🇳 Integration with official Indian weather warning systems</li>
+
+<li>📱 Dedicated mobile application</li>
+
+<li>📲 Push notifications</li>
+
+<li>🤖 AI-based weather risk prediction</li>
+
+<li>🛰️ Advanced disaster monitoring</li>
+
+<li>🌐 Cloud-based nationwide monitoring</li>
+
+<li>👥 User-specific location alerts</li>
+
+</ul>
+
+</div>
+
+
+<div class="section"
+style="text-align:center">
+
+<h2>🏆 Smart India Hackathon Prototype</h2>
+
+<p style="font-size:22px;margin:15px 0">
+<b>SIH Weather Guard</b>
+</p>
+
+<p style="color:#b9cee2">
+Turning weather data into simple, actionable risk information.
+</p>
+
+<p style="
+margin-top:20px;
+font-size:13px;
+color:#829db7;
+">
+Prototype disclaimer: Risk levels shown by this demo are
+based on prototype thresholds and should not replace official
+weather or emergency warnings.
+</p>
+
+</div>
+
+
+<footer>
+
+<b>SIH Weather Guard</b><br>
+
+Smart Weather Monitoring & Early Risk Detection Prototype<br><br>
+
+Weather data powered by Open-Meteo • Map powered by OpenStreetMap
+
+</footer>
+
+</div>
+
+
+<script>
+
+let currentData = null;
+let map;
+let marker;
+let weatherChart;
+
+let previousRisk = null;
+
+let countdownSeconds = 300;
+
+
+/* ================================
+   MAP
+================================ */
+
+function initMap(){
+
+    map = L.map('map').setView([18.5204,73.8567],10);
+
+    L.tileLayer(
+        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        {
+            attribution:'©️ OpenStreetMap contributors'
+        }
+    ).addTo(map);
+
+    marker = L.marker([18.5204,73.8567])
+        .addTo(map)
+        .bindPopup('Pune')
+        .openPopup();
+}
+
+
+/* ================================
+   CHECK WEATHER
+================================ */
+
+async function checkWeather(){
+
+    const city =
+        document.getElementById('cityInput')
+        .value
+        .trim();
+
+    if(!city){
+        alert('Please enter a city name.');
+        return;
+    }
+
+    try{
+
+        const geoResponse =
+            await fetch(
+                `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`
+            );
+
+        const geoData =
+            await geoResponse.json();
+
+        if(!geoData.results ||
+           geoData.results.length === 0){
+
+            alert('City not found.');
+            return;
+        }
+
+        const location =
+            geoData.results[0];
+
+        await loadWeather(
+            location.latitude,
+            location.longitude,
+            location.name
+        );
+
+    }catch(error){
+
+        console.error(error);
+
+        alert(
+            'Unable to fetch weather data. Please check your internet connection.'
+        );
+    }
+}
+
+
+/* ================================
+   LOAD WEATHER
+================================ */
+
+async function loadWeather(lat,lon,city){
+
+    try{
+
+        const url =
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code&hourly=temperature_2m,precipitation_probability,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&timezone=auto`;
+
+        const response =
+            await fetch(url);
+
+        const data =
+            await response.json();
+
+        currentData = {
+            lat:lat,
+            lon:lon,
+            city:city,
+            data:data
+        };
+
+        document.getElementById('cityName')
+            .textContent = city;
+
+        document.getElementById('temperature')
+            .textContent =
+            `${data.current.temperature_2m} °C`;
+
+        document.getElementById('humidity')
+            .textContent =
+            `${data.current.relative_humidity_2m} %`;
+
+        document.getElementById('wind')
+            .textContent =
+            `${data.current.wind_speed_10m} km/h`;
+
+        document.getElementById('rain')
+            .textContent =
+            `${data.current.precipitation} mm`;
+
+        document.getElementById('condition')
+            .textContent =
+            weatherCondition(
+                data.current.weather_code
+            );
+
+        document.getElementById('updated')
+            .textContent =
+            new Date().toLocaleTimeString();
+
+        updateRisk(data);
+
+        updateMap(lat,lon,city);
+
+        createChart(data);
+
+        showForecast(data);
+
+        updateKPIs();
+
+        renderMultiCity();
+
+    }catch(error){
+
+        console.error(error);
+
+        alert('Weather data could not be loaded.');
+
+    }
+
+}
+
+
+/* ================================
+   RISK
+================================ */
+
+function calculateRisk(data){
+
+    const temp =
+        data.current.temperature_2m;
+
+    const wind =
+        data.current.wind_speed_10m;
+
+    const rain =
+        data.current.precipitation;
+
+    const code =
+        data.current.weather_code;
+
+    if(
+        wind >= 60 ||
+        temp >= 45 ||
+        rain >= 30 ||
+        code >= 95
+    ){
+        return 'HIGH';
+    }
+
+    if(
+        wind >= 35 ||
+        temp >= 40 ||
+        rain >= 10 ||
+        code >= 51
+    ){
+        return 'MODERATE';
+    }
+
+    return 'LOW';
+}
+
+
+function updateRisk(data){
+
+    const risk =
+        calculateRisk(data);
+
+    const box =
+        document.getElementById('riskBox');
+
+    box.className =
+        'risk ' +
+        risk.toLowerCase();
+
+    box.textContent =
+        risk;
+
+    document.getElementById('recommendation')
+        .textContent =
+        recommendation(risk);
+
+    updateEmergency(risk);
+
+    if(
+        previousRisk &&
+        previousRisk !== risk
+    ){
+
+        showAlert(
+            `Risk changed from ${previousRisk} to ${risk}`
+        );
+    }
+
+    previousRisk = risk;
+
+}
+
+
+/* ================================
+   RECOMMENDATION
+================================ */
+
+function recommendation(risk){
+
+    if(risk === 'HIGH'){
+        return '⚠️ High weather risk detected. Stay alert and follow official safety instructions.';
+    }
+
+    if(risk === 'MODERATE'){
+        return '⚠️ Moderate weather risk. Take precautions and monitor conditions.';
+    }
+
+    return '✅ Weather conditions are currently normal.';
+}
+
+
+/* ================================
+   EMERGENCY
+================================ */
+
+function updateEmergency(risk){
+
+    const box =
+        document.getElementById('emergencyAlert');
+
+    if(risk === 'HIGH'){
+
+        box.className =
+            'alert high-alert';
+
+        box.innerHTML =
+            '🚨 <b>HIGH RISK:</b> Severe weather conditions may be present. Please monitor official warnings.';
+
+    }else if(risk === 'MODERATE'){
+
+        box.className =
+            'alert moderate-alert';
+
+        box.innerHTML =
+            '⚠️ <b>MODERATE RISK:</b> Weather conditions require attention.';
+
+    }else{
+
+        box.className =
+            'alert';
+
+        box.innerHTML =
+            '✅ <b>LOW RISK:</b> No major risk detected by the prototype.';
+    }
+
+}
+
+
+/* ================================
+   WEATHER CONDITION
+================================ */
+
+function weatherCondition(code){
+
+    if(code === 0)
+        return '☀️ Clear Sky';
+
+    if(code <= 3)
+        return '⛅ Partly Cloudy';
+
+    if(code <= 48)
+        return '🌫️ Fog';
+
+    if(code <= 57)
+        return '🌦️ Drizzle';
+
+    if(code <= 67)
+        return '🌧️ Rain';
+
+    if(code <= 77)
+        return '❄️ Snow';
+
+    if(code <= 82)
+        return '🌧️ Rain Showers';
+
+    if(code <= 86)
+        return '🌨️ Snow Showers';
+
+    if(code >= 95)
+        return '⛈️ Thunderstorm';
+
+    return 'Unknown';
+
+}
+
+
+/* ================================
+   MAP
+================================ */
+
+function updateMap(lat,lon,city){
+
+    map.setView(
+        [lat,lon],
+        10
+    );
+
+    marker
+        .setLatLng([lat,lon])
+        .bindPopup(
+            `<b>${city}</b><br>Weather monitoring location`
+        )
+        .openPopup();
+
+}
+
+
+/* ================================
+   CHART
+================================ */
+
+function createChart(data){
+
+    const ctx =
+        document
+        .getElementById('weatherChart')
+        .getContext('2d');
+
+    if(weatherChart){
+        weatherChart.destroy();
+    }
+
+    const labels =
+        data.hourly.time
+        .slice(0,24)
+        .map(t =>
+            new Date(t)
+            .toLocaleTimeString(
+                [],
+                {
+                    hour:'2-digit'
+                }
+            )
+        );
+
+    const temps =
+        data.hourly.temperature_2m
+        .slice(0,24);
+
+    const wind =
+        data.hourly.wind_speed_10m
+        .slice(0,24);
+
+    weatherChart =
+        new Chart(ctx,{
+            type:'line',
+
+            data:{
+                labels:labels,
+
+                datasets:[
+
+                    {
+                        label:'Temperature °C',
+                        data:temps,
+                        tension:.3
+                    },
+
+                    {
+                        label:'Wind km/h',
+                        data:wind,
+                        tension:.3
+                    }
+
+                ]
+            },
+
+            options:{
+                responsive:true,
+
+                plugins:{
+                    legend:{
+                        labels:{
+                            color:'white'
+                        }
+                    }
+                },
+
+                scales:{
+                    x:{
+                        ticks:{
+                            color:'#aac4dc'
+                        }
+                    },
+
+                    y:{
+                        ticks:{
+                            color:'#aac4dc'
+                        }
+                    }
+                }
+            }
+
+        });
+
+}
+
+
+/* ================================
+   FORECAST
+================================ */
+
+function showForecast(data){
+
+    const container =
+        document.getElementById('forecast');
+
+    container.innerHTML = '';
+
+    for(let i=0;i<7;i++){
+
+        const date =
+            new Date(
+                data.daily.time[i]
+            );
+
+        const card =
+            document.createElement('div');
+
+        card.className =
+            'card';
+
+        card.innerHTML = `
+
+            <h3>
+                ${date.toLocaleDateString(
+                    [],
+                    {weekday:'short'}
+                )}
+            </h3>
+
+            <p style="font-size:30px;margin:10px 0">
+                ${weatherCondition(
+                    data.daily.weather_code[i]
+                )}
+            </p>
+
+            <p>
+                🌡️ Max:
+                ${data.daily.temperature_2m_max[i]} °C
+            </p>
+
+            <p>
+                🌡️ Min:
+                ${data.daily.temperature_2m_min[i]} °C
+            </p>
+
+            <p>
+                🌧️ Rain:
+                ${data.daily.precipitation_sum[i]} mm
+            </p>
+
+            <p>
+                💨 Wind:
+                ${data.daily.wind_speed_10m_max[i]} km/h
+            </p>
+        `;
+
+        container.appendChild(card);
+    }
+
+}
+
+
+/* ================================
+   SAVED CITIES
+================================ */
+
+function getSavedCities(){
+
+    return JSON.parse(
+        localStorage.getItem('savedCities') || '[]'
+    );
+
+}
+
+
+function saveCurrentCity(){
+
+    if(!currentData){
+        alert('Check weather first.');
+        return;
+    }
+
+    let cities =
+        getSavedCities();
+
+    const exists =
+        cities.some(
+            city =>
+            city.city.toLowerCase() ===
+            currentData.city.toLowerCase()
+        );
+
+    if(exists){
+
+        alert('City already saved.');
+        return;
+    }
+
+    cities.push({
+
+        city:currentData.city,
+        lat:currentData.lat,
+        lon:currentData.lon
+
+    });
+
+    localStorage.setItem(
+        'savedCities',
+        JSON.stringify(cities)
+    );
+
+    renderSavedCities();
+
+    renderMultiCity();
+
+    updateKPIs();
+
+}
+
+
+function renderSavedCities(){
+
+    const container =
+        document.getElementById('savedCities');
+
+    const cities =
+        getSavedCities();
+
+    container.innerHTML = '';
+
+    if(cities.length === 0){
+
+        container.innerHTML =
+            '<p style="color:#9db6cf">No saved cities yet.</p>';
+
+        return;
+    }
+
+    cities.forEach(
+        (city,index) => {
+
+            const card =
+                document.createElement('div');
+
+            card.className =
+                'card city-card';
+
+            card.innerHTML = `
+
+                <h3>📍 ${city.city}</h3>
+
+                <button onclick="loadSavedCity(${index})">
+                    Open
+                </button>
+
+                <button
+                    class="danger"
+                    onclick="removeCity(${index})">
+                    Remove
+                </button>
+
+            `;
+
+            container.appendChild(card);
+
+        }
+    );
+
+}
+
+
+async function loadSavedCity(index){
+
+    const cities =
+        getSavedCities();
+
+    const city =
+        cities[index];
+
+    document.getElementById('cityInput')
+        .value = city.city;
+
+    await loadWeather(
+        city.lat,
+        city.lon,
+        city.city
+    );
+
+}
+
+
+function removeCity(index){
+
+    let cities =
+        getSavedCities();
+
+    cities.splice(index,1);
+
+    localStorage.setItem(
+        'savedCities',
+        JSON.stringify(cities)
+    );
+
+    renderSavedCities();
+
+    renderMultiCity();
+
+    updateKPIs();
+
+}
+
+
+/* ================================
+   MULTI CITY DASHBOARD
+================================ */
+
+async function renderMultiCity(){
+
+    const container =
+        document.getElementById('multiCity');
+
+    const cities =
+        getSavedCities();
+
+    if(cities.length === 0){
+
+        container.innerHTML =
+            '<p style="color:#9db6cf">Save cities to monitor multiple locations.</p>';
+
+        return;
+    }
+
+    container.innerHTML =
+        '<p style="color:#9db6cf">Loading city risks...</p>';
+
+    const results = [];
+
+    for(const city of cities){
+
+        try{
+
+            const response =
+                await fetch(
+                    `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,precipitation,wind_speed_10m,weather_code&timezone=auto`
+                );
+
+            const data =
+                await response.json();
+
+            const risk =
+                calculateRisk(data);
+
+            results.push({
+                city:city.city,
+                risk:risk,
+                temp:data.current.temperature_2m,
+                wind:data.current.wind_speed_10m,
+                rain:data.current.precipitation,
+                condition:weatherCondition(
+                    data.current.weather_code
+                )
+            });
+
+        }catch(error){
+
+            console.log(error);
+
+        }
+
+    }
+
+    container.innerHTML = '';
+
+    results.forEach(item => {
+
+        const card =
+            document.createElement('div');
+
+        card.className =
+            `card city-card ${item.risk.toLowerCase()}`;
+
+        card.innerHTML = `
+
+            <h3>📍 ${item.city}</h3>
+
+            <div class="city-risk">
+                ${item.risk} RISK
+            </div>
+
+            <p>🌡️ ${item.temp} °C</p>
+
+            <p>💨 ${item.wind} km/h</p>
+
+            <p>🌧️ ${item.rain} mm</p>
+
+            <p>${item.condition}</p>
+
+        `;
+
+        container.appendChild(card);
+
+    });
+
+}
+
+
+/* ================================
+   REFRESH ALL
+================================ */
+
+async function refreshAllCities(){
+
+    await renderMultiCity();
+
+}
+
+
+/* ================================
+   ALERT HISTORY
+================================ */
+
+function getAlerts(){
+
+    return JSON.parse(
+        localStorage.getItem('alertHistory') || '[]'
+    );
+
+}
+
+
+function showAlert(message){
+
+    const alerts =
+        getAlerts();
+
+    alerts.unshift({
+
+        message:message,
+
+        time:new Date()
+            .toLocaleString()
+
+    });
+
+    localStorage.setItem(
+        'alertHistory',
+        JSON.stringify(
+            alerts.slice(0,20)
+        )
+    );
+
+    renderAlerts();
+
+}
+
+
+function renderAlerts(){
+
+    const container =
+        document.getElementById('alertHistory');
+
+    const alerts =
+        getAlerts();
+
+    container.innerHTML = '';
+
+    if(alerts.length === 0){
+
+        container.innerHTML =
+            '<p style="color:#9db6cf">No alerts in history.</p>';
+
+        updateKPIs();
+
+        return;
+    }
+
+    alerts.forEach(alert => {
+
+        const div =
+            document.createElement('div');
+
+        div.className =
+            'alert';
+
+        div.innerHTML = `
+
+            <b>🔔 ${alert.message}</b>
+
+            <br>
+
+            <small style="color:#8da9c0">
+                ${alert.time}
+            </small>
+
+        `;
+
+        container.appendChild(div);
+
+    });
+
+    updateKPIs();
+
+}
+
+
+function testAlert(){
+
+    showAlert(
+        'Test weather alert generated successfully.'
+    );
+
+}
+
+
+function clearAlerts(){
+
+    localStorage.removeItem(
+        'alertHistory'
+    );
+
+    renderAlerts();
+
+}
+
+
+/* ================================
+   GEOLOCATION
+================================ */
+
+function useLocation(){
+
+    if(!navigator.geolocation){
+
+        alert(
+            'Geolocation is not supported by this browser.'
+        );
+
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+
+        async position => {
+
+            const lat =
+                position.coords.latitude;
+
+            const lon =
+                position.coords.longitude;
+
+            try{
+
+                const response =
+                    await fetch(
+                        `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=en&format=json`
+                    );
+
+                const data =
+                    await response.json();
+
+                let city =
+                    'My Location';
+
+                if(
+                    data.results &&
+                    data.results.length
+                ){
+
+                    city =
+                        data.results[0].name;
+
+                }
+
+                document.getElementById('cityInput')
+                    .value = city;
+
+                await loadWeather(
+                    lat,
+                    lon,
+                    city
+                );
+
+            }catch(error){
+
+                await loadWeather(
+                    lat,
+                    lon,
+                    'My Location'
+                );
+
+            }
+
+        },
+
+        error => {
+
+            alert(
+                'Location permission was not available. Please search your city instead.'
+            );
+
+        }
+
+    );
+
+}
+
+
+/* ================================
+   KPI
+================================ */
+
+function updateKPIs(){
+
+    const cities =
+        getSavedCities();
+
+    const alerts =
+        getAlerts();
+
+    document.getElementById('kpiCities')
+        .textContent =
+        cities.length;
+
+    document.getElementById('kpiAlerts')
+        .textContent =
+        alerts.length;
+
+    if(currentData){
+
+        const risk =
+            calculateRisk(
+                currentData.data
+            );
+
+        document.getElementById('kpiRisk')
+            .textContent =
+            risk;
+
+        document.getElementById('kpiTemp')
+            .textContent =
+            currentData.data.current
+            .temperature_2m +
+            '°C';
+
+    }
+
+}
+
+
+/* ================================
+   MANUAL REFRESH
+================================ */
+
+async function manualRefresh(){
+
+    if(!currentData){
+
+        await checkWeather();
+
+        return;
+    }
+
+    await loadWeather(
+
+        currentData.lat,
+
+        currentData.lon,
+
+        currentData.city
+
+    );
+
+    countdownSeconds = 300;
+
+}
+
+
+/* ================================
+   AUTO REFRESH
+================================ */
+
+async function autoRefresh(){
+
+    console.log(
+        'Automatic weather refresh'
+    );
+
+    if(currentData){
+
+        await loadWeather(
+
+            currentData.lat,
+
+            currentData.lon,
+
+            currentData.city
+
+        );
+
+    }else{
+
+        await checkWeather();
+
+    }
+
+    countdownSeconds = 300;
+
+}
+
+
+/* ================================
+   COUNTDOWN
+================================ */
+
+function updateCountdown(){
+
+    countdownSeconds--;
+
+    if(countdownSeconds < 0){
+
+        countdownSeconds = 300;
+
+    }
+
+    const minutes =
+        Math.floor(
+            countdownSeconds / 60
+        );
+
+    const seconds =
+        countdownSeconds % 60;
+
+    document.getElementById('countdown')
+        .textContent =
+        String(minutes).padStart(2,'0')
+        + ':' +
+        String(seconds).padStart(2,'0');
+
+}
+
+
+/* ================================
+   START
+================================ */
+
+window.addEventListener(
+    'load',
+    async () => {
+
+        initMap();
+
+        renderSavedCities();
+
+        renderAlerts();
+
+        updateKPIs();
+
+        await checkWeather();
+
+        countdownSeconds = 300;
+
+    }
+);
+
+
+/* Every second */
+setInterval(
+    updateCountdown,
+    1000
+);
+
+
+/* Every 5 minutes */
+setInterval(
+    autoRefresh,
+    300000
+);
+
+</script>
+
+</body>
+</html>
